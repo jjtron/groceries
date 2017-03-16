@@ -23,9 +23,6 @@ export class GroceryService {
     })
     .map(res => res.json())
     .map(data => {
-      data.Result.sort(function(a, b) {
-        return (a.Name < b.Name) ? -1 : (a.Name > b.Name) ? 1 : 0;
-      });
       data.Result.forEach((grocery) => {
         this.allItems.push(
           new Grocery(
@@ -36,6 +33,7 @@ export class GroceryService {
             grocery.getToday || false
           )
         );
+        this.sortGroceries();
         this.publishUpdates();
       });
     })
@@ -51,9 +49,18 @@ export class GroceryService {
     .map(res => res.json())
     .map(data => {
       this.allItems.unshift(new Grocery(data.Result.Id, name, false, false, false));
+      this.sortGroceries();
       this.publishUpdates();
     })
     .catch(this.handleErrors);
+  }
+
+  filterForToday() {
+    let newArray = this.allItems.filter((grocery) => {
+        return grocery.getToday;
+    });
+    this.allItems = newArray;
+    this.publishUpdates();
   }
 
   setDeleteFlag(item: Grocery) {
@@ -151,5 +158,11 @@ export class GroceryService {
   private handleErrors(error: Response) {
     console.log(error);
     return Observable.throw(error);
+  }
+
+  private sortGroceries() {
+    this.allItems.sort(function(a, b) {
+      return (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0;
+    });
   }
 }

@@ -55,6 +55,15 @@ export class GroceriesComponent implements OnInit {
 
   filterGetToday() {
     this.todaysPicks = !this.todaysPicks;
+    if (this.todaysPicks) {
+        this.store.filterForToday();
+    } else {
+        this.store.load().subscribe(
+        () => {},
+        () => {
+          alert("An error occurred re-loading the grocery list.");
+        });
+    }
   }
 
   add(target: string) {

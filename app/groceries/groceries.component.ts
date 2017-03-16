@@ -6,7 +6,6 @@ import { Page } from "ui/page";
 import { TextField } from "ui/text-field";
 import * as SocialShare from "nativescript-social-share";
 
-import { GroceryListComponent } from "./grocery-list/grocery-list.component";
 import { GroceryService } from "./shared";
 import { LoginService, alert } from "../shared";
 

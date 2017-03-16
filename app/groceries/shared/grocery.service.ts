@@ -23,6 +23,9 @@ export class GroceryService {
     })
     .map(res => res.json())
     .map(data => {
+      data.Result.sort(function(a, b) {
+        return (a.Name < b.Name) ? -1 : (a.Name > b.Name) ? 1 : 0;
+      });
       data.Result.forEach((grocery) => {
         this.allItems.push(
           new Grocery(

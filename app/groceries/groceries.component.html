@@ -58,18 +58,28 @@
   </GridLayout>
 
   <!-- Row 3: Filter today's picks -->
-  <StackLayout
+  <GridLayout
     row="2"
-    columns="auto"
+    columns="*, auto, auto"
     [backgroundColor]="'#FFC169'"
     class="add-bar"
     (tap)="filterGetToday()" >
     <Label
       col="0"
-      [text]="todaysPicks ? 'Show All' : 'Filter for items to get today'"
-      style="font-weight: bold; font-size: 20px">
+      [text]="todaysPicks ? 'Show All' : ''"
+      style="font-weight: bold; font-size: 16px">
     </Label>
-  </StackLayout>
+    <Label
+      col="1"
+      [text]=""
+      style="font-weight: bold; font-size: 16px">
+    </Label>
+    <Label
+      col="2"
+      [text]="'Get Today       '"
+      style="font-weight: bold; font-size: 16px">
+    </Label>
+  </GridLayout>
   
   <!-- Row 4: The grocery list -->
   <gr-grocery-list

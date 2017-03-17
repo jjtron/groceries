@@ -11,6 +11,7 @@ export class GroceryService {
   items: BehaviorSubject<Array<Grocery>> = new BehaviorSubject([]);
 
   private allItems: Array<Grocery> = [];
+  private todaysPicks: string[] = [];
 
   constructor(private http: Http, private zone: NgZone) { }
 
@@ -33,11 +34,33 @@ export class GroceryService {
             grocery.getToday || false
           )
         );
-        this.sortGroceries();
-        this.publishUpdates();
       });
+      this.sortGroceries();
+      this.setTodaysPicks();
+      this.publishUpdates();
     })
     .catch(this.handleErrors);
+  }
+
+  showAll () {
+      this.todaysPicks = [];
+      this.allItems.forEach((item, i) => {
+          if (item.getToday) {
+            this.todaysPicks.push(item.id);
+          }
+      });
+      this.allItems = [];
+      return this.load();
+  }
+
+  setTodaysPicks () {
+      this.todaysPicks.forEach((pickId) => {
+          this.allItems.forEach((item) => {
+              if (item.id === pickId) {
+                  item.getToday = true;
+              }
+          });
+      });
   }
 
   add(name: string) {

@@ -58,7 +58,7 @@ export class GroceriesComponent implements OnInit {
     if (this.todaysPicks) {
         this.store.filterForToday();
     } else {
-        this.store.load().subscribe(
+        this.store.showAll().subscribe(
         () => {},
         () => {
           alert("An error occurred re-loading the grocery list.");

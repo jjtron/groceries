@@ -59,6 +59,7 @@
 
   <!-- Row 3: Filter today's picks -->
   <GridLayout
+    *ngIf="!isShowingRecent"
     row="2"
     columns="*, auto, auto"
     [backgroundColor]="'#FFC169'"

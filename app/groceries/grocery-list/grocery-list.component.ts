@@ -16,6 +16,7 @@ declare var UIColor: any;
 export class GroceryListComponent {
   @Input() showDeleted: boolean;
   @Input() row;
+  @Input() storeName;
   @Output() loading = new EventEmitter();
   @Output() loaded = new EventEmitter();
 

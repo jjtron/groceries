@@ -23,7 +23,7 @@
   <!-- Row 2: The text field to add groceries, and recent button -->
   <GridLayout
     row="1"
-    columns="auto, *, auto"
+    columns="auto, auto, *, *, auto"
     [backgroundColor]="isShowingRecent ? '#BBC169' : '#CB1D00'"
     class="add-bar">
     <StackLayout
@@ -47,8 +47,26 @@
       text="Recent items"
       *ngIf="isShowingRecent"
       class="add-bar-recent-label"></Label>
+    <StackLayout
+      *ngIf="!isShowingRecent"
+      class="add-bar-image-container"
+      col="2"
+      (tap)="switchStore('aldis')">
+      <Image
+        col="0"
+        [src]="'res://aldis'"></Image>
+    </StackLayout>
+    <StackLayout
+      *ngIf="!isShowingRecent"
+      class="add-bar-image-container"
+      col="3"
+      (tap)="switchStore('publix')">
+      <Image
+        col="0"
+        [src]="'res://publix'"></Image>
+    </StackLayout>
    <StackLayout
-     col="2"
+     col="4"
      class="add-bar-recent-container"
      (tap)="toggleRecent()">
      <Label
@@ -87,7 +105,8 @@
     [row]="3"
     (loading)="showActivityIndicator()"
     (loaded)="hideActivityIndicator()"
-    [showDeleted]="isShowingRecent"></gr-grocery-list>
+    [showDeleted]="isShowingRecent"
+    [storeName]="storeName"></gr-grocery-list>
 
   <ActivityIndicator
     [busy]="isLoading"

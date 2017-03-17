@@ -22,6 +22,7 @@ export class GroceriesComponent implements OnInit {
   isShowingRecent = false;
   isLoading = false;
   todaysPicks: boolean = false;
+  storeName: string = 'aldis';
 
   @ViewChild("groceryTextField") groceryTextField: ElementRef;
 
@@ -151,5 +152,9 @@ export class GroceriesComponent implements OnInit {
   logoff() {
     this.loginService.logoff();
     this.router.navigate(["/login"]);
+  }
+
+  switchStore (storename: string) {
+      this.storeName = storename;
   }
 }

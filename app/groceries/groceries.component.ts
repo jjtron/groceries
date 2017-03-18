@@ -153,8 +153,4 @@ export class GroceriesComponent implements OnInit {
     this.loginService.logoff();
     this.router.navigate(["/login"]);
   }
-
-  switchStore (storename: string) {
-      this.storeName = storename;
-  }
 }

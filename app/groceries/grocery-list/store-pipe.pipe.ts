@@ -12,13 +12,18 @@ export class StorePipe {
             return !grocery.name.startsWith("x ");
         }
     });
-//    .map((grocery) => {
-//        if (store === 'publix') {
-//            grocery.name = grocery.name.substr(2);
-//            return grocery;
-//        } else {
-//            return grocery;
-//        }
-//    });
+  }
+}
+
+@Pipe({
+  name: 'PrefixPipe'
+})
+export class PrefixPipe {
+  transform(groceryName: string): string {
+    if (groceryName.substr(0, 2) === "x ") {
+       return groceryName.substr(2);
+    } else {
+       return groceryName;
+    }
   }
 }

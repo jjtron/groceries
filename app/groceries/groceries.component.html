@@ -51,19 +51,19 @@
       *ngIf="!isShowingRecent"
       class="add-bar-image-container"
       col="2"
-      (tap)="switchStore('aldis')">
+      (tap)="storeName = 'aldis'">
       <Image
         col="0"
-        [src]="'res://aldis'"></Image>
+        [src]="storeName === 'aldis' ? 'res://aldis' : 'res://aldis_not'"></Image>
     </StackLayout>
     <StackLayout
       *ngIf="!isShowingRecent"
       class="add-bar-image-container"
       col="3"
-      (tap)="switchStore('publix')">
+      (tap)="storeName = 'publix'">
       <Image
         col="0"
-        [src]="'res://publix'"></Image>
+        [src]="storeName === 'publix' ? 'res://publix' : 'res://publix_not'"></Image>
     </StackLayout>
    <StackLayout
      col="4"

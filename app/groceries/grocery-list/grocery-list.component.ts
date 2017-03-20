@@ -17,6 +17,7 @@ export class GroceryListComponent {
   @Input() showDeleted: boolean;
   @Input() row;
   @Input() storeName;
+  @Input() todaysPicks;
   @Output() loading = new EventEmitter();
   @Output() loaded = new EventEmitter();
 
@@ -27,15 +28,14 @@ export class GroceryListComponent {
   load() {
     this.loading.next("");
     this.store.load()
-      .subscribe(
+    .then(
         () => {
           this.loaded.next("");
           this.listLoaded = true;
         },
         () => {
           alert("An error occurred loading your grocery list.");
-        }
-      );
+        });
   }
 
   // The following trick makes the background color of each cell
@@ -60,17 +60,29 @@ export class GroceryListComponent {
   }
 
   toggleGetToday(grocery: Grocery) {
-    grocery.getToday = !grocery.getToday;
+    this.store.toggleGetTodayFlag(grocery)
+      .then(
+        () => { },
+        () => {
+          alert("An error occurred managing your grocery list.");
+        }
+      );
   }
 
   toggleDone(grocery: Grocery) {
     if (grocery.deleted) {
-      grocery.done = !grocery.done;
+      grocery.deleted = false;
+      this.store.restore(grocery).then(
+        () => { },
+        () => {
+          alert("An error occurred managing your grocery list.");
+        }
+      );
       return;
     }
 
     this.store.toggleDoneFlag(grocery)
-      .subscribe(
+      .then(
         () => { },
         () => {
           alert("An error occurred managing your grocery list.");
@@ -87,12 +99,16 @@ export class GroceryListComponent {
     };
 
     if (grocery.deleted) {
-      this.store.permanentlyDelete(grocery)
-        .subscribe(successHandler, errorHandler);
+      this.store.permanentlyDelete(grocery).then(() => {
+          successHandler();
+      })
+      .catch(() => {}); // TODO
+        
     } else {
-      this.store.setDeleteFlag(grocery)
-        .subscribe(successHandler, errorHandler);
+      this.store.setDeleteFlag(grocery).then(() => {
+          successHandler();   
+      })
+      .catch(() => {}); // TODO
     }
   }
 }
-

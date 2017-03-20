@@ -27,3 +27,22 @@ export class PrefixPipe {
     }
   }
 }
+
+@Pipe({
+  name: 'GetTodayPipe'
+})
+export class GetTodayPipe {
+  transform(array: any[], getTodayOnly: string): any[] {
+    return array.filter((grocery) => {
+        if (getTodayOnly) {
+            if (grocery.getToday) {
+                return true;    
+            } else {
+                return false;    
+            }
+        } else {
+            return true;
+        }
+    });
+  }
+}

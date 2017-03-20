@@ -56,15 +56,7 @@ export class GroceriesComponent implements OnInit {
 
   filterGetToday() {
     this.todaysPicks = !this.todaysPicks;
-    if (this.todaysPicks) {
-        this.store.filterForToday();
-    } else {
-        this.store.showAll().subscribe(
-        () => {},
-        () => {
-          alert("An error occurred re-loading the grocery list.");
-        });
-    }
+    //this.store.loadOldStuff().subscribe(() => {});
   }
 
   add(target: string) {
@@ -94,7 +86,7 @@ export class GroceriesComponent implements OnInit {
 
     this.showActivityIndicator();
     this.store.add(this.grocery)
-      .subscribe(
+      .then(
         () => {
           this.grocery = "";
           this.hideActivityIndicator();
@@ -110,20 +102,10 @@ export class GroceriesComponent implements OnInit {
     if (!this.isShowingRecent) {
       this.isShowingRecent = true;
       return;
+    } else {
+      this.isShowingRecent = false;
+      this.hideActivityIndicator();
     }
-
-    this.showActivityIndicator();
-    this.store.restore()
-      .subscribe(
-        () => {
-          this.isShowingRecent = false;
-          this.hideActivityIndicator();
-        },
-        () => {
-          alert("An error occurred while adding groceries to your list.");
-          this.hideActivityIndicator();
-        }
-      );
   }
 
   showMenu() {

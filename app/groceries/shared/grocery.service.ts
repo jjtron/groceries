@@ -2,190 +2,237 @@ import { Injectable, NgZone } from "@angular/core";
 import { Http, Headers, Response, ResponseOptions } from "@angular/http";
 import { Observable, BehaviorSubject } from "rxjs/Rx";
 import "rxjs/add/operator/map";
+let Sqlite = require("nativescript-sqlite");
+const uuid = require('uuid-js');
 
 import { BackendService } from "../../shared";
 import { Grocery } from "./grocery.model";
 
 @Injectable()
 export class GroceryService {
-  items: BehaviorSubject<Array<Grocery>> = new BehaviorSubject([]);
+    items: BehaviorSubject<Array<Grocery>> = new BehaviorSubject([]);
 
-  private allItems: Array<Grocery> = [];
-  private todaysPicks: string[] = [];
+    private allItems: Array<Grocery> = [];
+    private todaysPicks: string[] = [];
+    private database: any;
 
-  constructor(private http: Http, private zone: NgZone) { }
+    constructor(private http: Http, private zone: NgZone) { }
 
-  load() {
-    let headers = this.getHeaders();
-    headers.append("X-Everlive-Sort", JSON.stringify({ ModifiedAt: -1 }));
+    loadOldStuff() {
+        let headers = this.getHeaders();
+        headers.append("X-Everlive-Sort", JSON.stringify({ ModifiedAt: -1 }));
 
-    return this.http.get(BackendService.apiUrl + "Groceries", {
-      headers: headers
-    })
-    .map(res => res.json())
-    .map(data => {
-      data.Result.forEach((grocery) => {
-        this.allItems.push(
-          new Grocery(
-            grocery.Id,
-            grocery.Name,
-            grocery.Done || false,
-            grocery.Deleted || false,
-            grocery.getToday || false
-          )
-        );
-      });
-      this.sortGroceries();
-      this.setTodaysPicks();
-      this.publishUpdates();
-    })
-    .catch(this.handleErrors);
-  }
+        return this.http.get(BackendService.apiUrl + "Groceries", {
+            headers: headers
+        })
+            .map(res => res.json())
+            .map(data => {
+                let oldData = [];
+                data.Result.forEach((grocery) => {
+                    oldData.push(
+                        new Grocery(
+                            grocery.Id,
+                            grocery.Name,
+                            grocery.Done || false,
+                            grocery.Deleted || false,
+                            grocery.getToday || false
+                        )
+                    );
+                });
+                oldData.forEach((item) => {
+                    this.insert(item.name);
+                });
+            })
+            .catch(this.handleErrors);
+    }
 
-  showAll () {
-      this.todaysPicks = [];
-      this.allItems.forEach((item, i) => {
-          if (item.getToday) {
-            this.todaysPicks.push(item.id);
-          }
-      });
-      this.allItems = [];
-      return this.load();
-  }
+    load(): any {
+        return this.setUpDb().then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            return this.setUpData(data);
+        });
+    }
 
-  setTodaysPicks () {
-      this.todaysPicks.forEach((pickId) => {
-          this.allItems.forEach((item) => {
-              if (item.id === pickId) {
-                  item.getToday = true;
-              }
-          });
-      });
-  }
+    add(name: string) {
+        return this.insert(name).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  add(name: string) {
-    return this.http.post(
-      BackendService.apiUrl + "Groceries",
-      JSON.stringify({ Name: name }),
-      { headers: this.getHeaders() }
-    )
-    .map(res => res.json())
-    .map(data => {
-      this.allItems.unshift(new Grocery(data.Result.Id, name, false, false, false));
-      this.sortGroceries();
-      this.publishUpdates();
-    })
-    .catch(this.handleErrors);
-  }
+    setDeleteFlag(item: Grocery) {
+        return this.update(item.id, true, false, false).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  filterForToday() {
-    let newArray = this.allItems.filter((grocery) => {
-        return grocery.getToday;
-    });
-    this.allItems = newArray;
-    this.publishUpdates();
-  }
+    toggleGetTodayFlag(item: Grocery) {
+        item.getToday = !item.getToday;
+        return this.update(item.id, false, item.done, item.getToday).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  setDeleteFlag(item: Grocery) {
-    return this.put(item.id, { Deleted: true, Done: false })
-      .map(res => res.json())
-      .map(data => {
-        item.deleted = true;
-        item.done = false;
-        this.publishUpdates();
-      });
-  }
+    toggleDoneFlag(item: Grocery) {
+        item.done = !item.done;
+        return this.update(item.id, false, item.done, item.getToday).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  toggleDoneFlag(item: Grocery) {
-    item.done = !item.done;
-    this.publishUpdates();
-    return this.put(item.id, { Done: item.done })
-      .map(res => res.json());
-  }
+    permanentlyDelete(item: Grocery) {
+        return this.deleteItem(item.id).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  restore() {
-    let indeces = [];
-    this.allItems.forEach((grocery) => {
-      if (grocery.deleted && grocery.done) {
-        indeces.push(grocery.id);
-      }
-    });
+    private publishUpdates() {
+        // Make sure all updates are published inside NgZone so that change detection is triggered if needed
+        this.zone.run(() => {
+            // must emit a *new* value (immutability!)
+            this.items.next([...this.allItems]);
+        });
+    }
 
-    let headers = this.getHeaders();
-    headers.append("X-Everlive-Filter", JSON.stringify({
-      "Id": {
-        "$in": indeces
-      }
-    }));
+    private getHeaders() {
+        let headers = new Headers();
+        headers.append("Content-Type", "application/json");
+        headers.append("Authorization", "Bearer " + BackendService.token);
+        return headers;
+    }
 
-    return this.http.put(
-      BackendService.apiUrl + "Groceries",
-      JSON.stringify({
-        Deleted: false,
-        Done: false
-      }),
-      { headers: headers }
-    )
-    .map(res => res.json())
-    .map(data => {
-      this.allItems.forEach((grocery) => {
-        if (grocery.deleted && grocery.done) {
-          grocery.deleted = false;
-          grocery.done = false;
-        }
-      });
-      this.publishUpdates();
-    })
-    .catch(this.handleErrors);
-  }
+    private handleErrors(error: Response) {
+        console.log(error);
+        return Observable.throw(error);
+    }
 
-  permanentlyDelete(item: Grocery) {
-    return this.http
-      .delete(
-        BackendService.apiUrl + "Groceries/" + item.id,
-        { headers: this.getHeaders() }
-      )
-      .map(res => res.json())
-      .map(data => {
-        let index = this.allItems.indexOf(item);
-        this.allItems.splice(index, 1);
-        this.publishUpdates();
-      })
-      .catch(this.handleErrors);
-  }
+    private sortGroceries() {
+        this.allItems.sort(function(a, b) {
+            return (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0;
+        });
+    }
 
-  private put(id: string, data: Object) {
-    return this.http.put(
-      BackendService.apiUrl + "Groceries/" + id,
-      JSON.stringify(data),
-      { headers: this.getHeaders() }
-    )
-    .catch(this.handleErrors);
-  }
+    restore(item: Grocery) {
+        return this.update(item.id, false, false, false).then(() => {
+            return this.fetch();
+        })
+        .then((data) => {
+            this.allItems = [];
+            return this.setUpData(data);
+        });
+    }
 
-  private publishUpdates() {
-    // Make sure all updates are published inside NgZone so that change detection is triggered if needed
-    this.zone.run(() => {
-      // must emit a *new* value (immutability!)
-      this.items.next([...this.allItems]);
-    });
-  }
+    insert(groceryName: string) {
+        return new Promise((resolve, reject) => {
+            let id = uuid.create();
+            this.database.execSQL("INSERT INTO groceries (Name, Deleted, Done, getToday, Id) VALUES (?, ?, ?, ?, ?)", [groceryName, false, false, false, id]).then(id => {
+                resolve(true);
+            }, error => {
+                console.log("INSERT ERROR", error);
+                reject(false);
+            });
+        });
+    }
 
-  private getHeaders() {
-    let headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", "Bearer " + BackendService.token);
-    return headers;
-  }
+    update(groceryId: string, deleted: boolean, done: boolean, getToday: boolean) {
+        return new Promise((resolve, reject) => {
+            let id = uuid.create();
+            this.database.execSQL("UPDATE groceries SET Deleted = ?, Done = ?, getToday = ? WHERE Id = ?", [deleted, done, getToday, groceryId]).then(id => {
+                resolve(true);
+            }, error => {
+                console.log("UPDATE ERROR", error);
+                reject(false);
+            });
+        });
+    }
 
-  private handleErrors(error: Response) {
-    console.log(error);
-    return Observable.throw(error);
-  }
+    deleteItem(groceryId: string) {
+        return new Promise((resolve, reject) => {
+            let id = uuid.create();
+            this.database.execSQL("DELETE FROM groceries WHERE Id = ?", [groceryId]).then(id => {
+                resolve(true);
+            }, error => {
+                console.log("UPDATE ERROR", error);
+                reject(false);
+            });
+        });
+    }
 
-  private sortGroceries() {
-    this.allItems.sort(function(a, b) {
-      return (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0;
-    });
-  }
+    fetch(): any {
+        let p = new Promise((resolve, reject) => {
+            this.database.all("SELECT * FROM groceries").then(rows => {
+                resolve(rows);
+            }, error => {
+                console.log("SELECT ERROR", error);
+            });
+        });
+        return p;
+    }
+
+    setUpData(rows: any): any {
+        let p = new Promise((resolve, reject) => {
+            rows.forEach((grocery) => {
+                this.allItems.push(
+                    new Grocery(
+                        grocery[4],
+                        grocery[0],
+                        (grocery[2] === 'true') ? true : false,
+                        (grocery[1] === 'true') ? true : false,
+                        (grocery[3] === 'true') ? true : false
+                    )
+                );
+            });
+            this.sortGroceries();
+            this.publishUpdates();
+            resolve(true);
+        });
+        return p;
+    }
+
+    setUpDb() {
+        return new Promise((resolve, reject) => {
+            if (!this.database) {
+                (new Sqlite("my.db")).then(db => {
+                    db.execSQL(`CREATE TABLE IF NOT EXISTS groceries (
+                        Name TEXT,
+                        Deleted BOOLEAN,
+                        Done BOOLEAN,
+                        getToday BOOLEAN,
+                        Id TEXT)`
+                    ).then(
+                        () => {
+                            this.database = db;
+                            resolve(true);
+                        }, error => {
+                            console.log("CREATE TABLE ERROR", error);
+                        });
+                }, error => {
+                    console.log("OPEN DB ERROR", error);
+                });
+            } else {
+                resolve(true);
+            }
+        });
+    }
 }

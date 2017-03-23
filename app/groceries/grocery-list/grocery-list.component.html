@@ -18,7 +18,7 @@
           [src]="imageSource(item)"
           class="check-box"></Image>
         <Label
-          [text]="item.name | PrefixPipe"
+          [text]="item.name + item.createdate | PrefixPipe"
           [class.line-through]="item.done && !item.deleted"></Label>
       </StackLayout>
       <StackLayout

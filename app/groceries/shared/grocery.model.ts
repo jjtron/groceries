@@ -4,6 +4,7 @@ export class Grocery {
     public name: string,
     public done: boolean,
     public deleted: boolean,
-    public getToday: boolean
+    public getToday: boolean,
+    public createdate?: string
   ) {}
 }

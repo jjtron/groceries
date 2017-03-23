@@ -4,59 +4,69 @@ import { Observable, BehaviorSubject } from "rxjs/Rx";
 import "rxjs/add/operator/map";
 let Sqlite = require("nativescript-sqlite");
 const uuid = require('uuid-js');
+import * as fs from "file-system";
 
 import { BackendService } from "../../shared";
 import { Grocery } from "./grocery.model";
 
 @Injectable()
 export class GroceryService {
-    items: BehaviorSubject<Array<Grocery>> = new BehaviorSubject([]);
 
+    public items: BehaviorSubject<Array<Grocery>> = new BehaviorSubject([]);
     private allItems: Array<Grocery> = [];
-    private todaysPicks: string[] = [];
     private database: any;
 
-    constructor(private http: Http, private zone: NgZone) { }
+    constructor(private http: Http, private zone: NgZone) {}
 
-    loadOldStuff() {
-        let headers = this.getHeaders();
-        headers.append("X-Everlive-Sort", JSON.stringify({ ModifiedAt: -1 }));
-
-        return this.http.get(BackendService.apiUrl + "Groceries", {
-            headers: headers
-        })
-            .map(res => res.json())
-            .map(data => {
-                let oldData = [];
-                data.Result.forEach((grocery) => {
-                    oldData.push(
-                        new Grocery(
-                            grocery.Id,
-                            grocery.Name,
-                            grocery.Done || false,
-                            grocery.Deleted || false,
-                            grocery.getToday || false
-                        )
-                    );
+    private loadOldStuff() {
+        return new Promise((resolve, reject) => {
+            let documents: any = fs.knownFolders.currentApp();
+            let jsonFile: any = documents.getFile('shared/resources/sa.json');
+            let jsonData: any;
+            
+            jsonFile.readText()
+                .then((content) => {
+                    try {
+                        jsonData = JSON.parse(content);
+                        this.deleteAll().then(() => {
+                            jsonData.forEach((item) => {
+                                this.insert(item, '');
+                            });
+                            resolve();
+                        });
+                    } catch (err) {
+                        reject();
+                        throw new Error('Could not parse JSON file');
+                    }
                 });
-                oldData.forEach((item) => {
-                    this.insert(item.name);
-                });
-            })
-            .catch(this.handleErrors);
-    }
-
-    load(): any {
-        return this.setUpDb().then(() => {
-            return this.fetch();
-        })
-        .then((data) => {
-            return this.setUpData(data);
         });
     }
 
-    add(name: string) {
-        return this.insert(name).then(() => {
+    public load(): any {
+        return this.setUpDb().then(() => {
+            return this.checkForData();
+        })
+        .then(
+            () => {
+                this.fetch()
+                    .then((data) => {
+                        return this.setUpData(data);
+                    });
+            },
+            () => {
+                this.loadOldStuff()
+                    .then(() => {
+                        return this.fetch()
+                    })
+                    .then((data) => {
+                        return this.setUpData(data);
+                    });
+            }    
+        );
+    }
+
+    public add(name: string) {
+        return this.insert(name, '*').then(() => {
             return this.fetch();
         })
         .then((data) => {
@@ -65,7 +75,7 @@ export class GroceryService {
         });
     }
 
-    setDeleteFlag(item: Grocery) {
+    public setDeleteFlag(item: Grocery) {
         return this.update(item.id, true, false, false).then(() => {
             return this.fetch();
         })
@@ -75,7 +85,7 @@ export class GroceryService {
         });
     }
 
-    toggleGetTodayFlag(item: Grocery) {
+    public toggleGetTodayFlag(item: Grocery) {
         item.getToday = !item.getToday;
         return this.update(item.id, false, item.done, item.getToday).then(() => {
             return this.fetch();
@@ -86,7 +96,7 @@ export class GroceryService {
         });
     }
 
-    toggleDoneFlag(item: Grocery) {
+    public toggleDoneFlag(item: Grocery) {
         item.done = !item.done;
         return this.update(item.id, false, item.done, item.getToday).then(() => {
             return this.fetch();
@@ -97,7 +107,7 @@ export class GroceryService {
         });
     }
 
-    permanentlyDelete(item: Grocery) {
+    public permanentlyDelete(item: Grocery) {
         return this.deleteItem(item.id).then(() => {
             return this.fetch();
         })
@@ -133,7 +143,7 @@ export class GroceryService {
         });
     }
 
-    restore(item: Grocery) {
+    public restore(item: Grocery) {
         return this.update(item.id, false, false, false).then(() => {
             return this.fetch();
         })
@@ -143,10 +153,14 @@ export class GroceryService {
         });
     }
 
-    insert(groceryName: string) {
+    private insert(groceryName: string, createdate: string) {
         return new Promise((resolve, reject) => {
             let id = uuid.create();
-            this.database.execSQL("INSERT INTO groceries (Name, Deleted, Done, getToday, Id) VALUES (?, ?, ?, ?, ?)", [groceryName, false, false, false, id]).then(id => {
+            this.database.execSQL(
+                "INSERT INTO groceries (Name, Deleted, Done, getToday, Id, createdate) VALUES (?, ?, ?, ?, ?, ?)",
+                [groceryName, false, false, false, id, createdate]
+            )
+            .then(() => {
                 resolve(true);
             }, error => {
                 console.log("INSERT ERROR", error);
@@ -155,7 +169,7 @@ export class GroceryService {
         });
     }
 
-    update(groceryId: string, deleted: boolean, done: boolean, getToday: boolean) {
+    private update(groceryId: string, deleted: boolean, done: boolean, getToday: boolean) {
         return new Promise((resolve, reject) => {
             let id = uuid.create();
             this.database.execSQL("UPDATE groceries SET Deleted = ?, Done = ?, getToday = ? WHERE Id = ?", [deleted, done, getToday, groceryId]).then(id => {
@@ -167,7 +181,7 @@ export class GroceryService {
         });
     }
 
-    deleteItem(groceryId: string) {
+    private deleteItem(groceryId: string) {
         return new Promise((resolve, reject) => {
             let id = uuid.create();
             this.database.execSQL("DELETE FROM groceries WHERE Id = ?", [groceryId]).then(id => {
@@ -179,7 +193,34 @@ export class GroceryService {
         });
     }
 
-    fetch(): any {
+    private deleteAll() {
+        return new Promise((resolve, reject) => {
+            let id = uuid.create();
+            this.database.execSQL("DELETE FROM groceries").then(id => {
+                resolve(true);
+            }, error => {
+                console.log("UPDATE ERROR", error);
+                reject(false);
+            });
+        });
+    }
+
+    private checkForData () {
+        let p = new Promise((resolve, reject) => {
+            this.database.all("SELECT * FROM groceries").then(rows => {
+                if (rows.length > 0) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            }, error => {
+                console.log("SELECT ERROR", error);
+            });
+        });
+        return p;
+    }
+
+    private fetch(): any {
         let p = new Promise((resolve, reject) => {
             this.database.all("SELECT * FROM groceries").then(rows => {
                 resolve(rows);
@@ -190,7 +231,7 @@ export class GroceryService {
         return p;
     }
 
-    setUpData(rows: any): any {
+    private setUpData(rows: any): any {
         let p = new Promise((resolve, reject) => {
             rows.forEach((grocery) => {
                 this.allItems.push(
@@ -199,7 +240,8 @@ export class GroceryService {
                         grocery[0],
                         (grocery[2] === 'true') ? true : false,
                         (grocery[1] === 'true') ? true : false,
-                        (grocery[3] === 'true') ? true : false
+                        (grocery[3] === 'true') ? true : false,
+                        grocery[5]
                     )
                 );
             });
@@ -210,7 +252,7 @@ export class GroceryService {
         return p;
     }
 
-    setUpDb() {
+    private setUpDb() {
         return new Promise((resolve, reject) => {
             if (!this.database) {
                 (new Sqlite("my.db")).then(db => {
@@ -219,7 +261,8 @@ export class GroceryService {
                         Deleted BOOLEAN,
                         Done BOOLEAN,
                         getToday BOOLEAN,
-                        Id TEXT)`
+                        Id TEXT,
+                        createdate TEXT)`
                     ).then(
                         () => {
                             this.database = db;

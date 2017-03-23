@@ -56,7 +56,6 @@ export class GroceriesComponent implements OnInit {
 
   filterGetToday() {
     this.todaysPicks = !this.todaysPicks;
-    //this.store.loadOldStuff().subscribe(() => {});
   }
 
   add(target: string) {

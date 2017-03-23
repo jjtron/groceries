@@ -5,8 +5,6 @@ import "rxjs/add/operator/map";
 let Sqlite = require("nativescript-sqlite");
 const uuid = require('uuid-js');
 import * as fs from "file-system";
-
-import { BackendService } from "../../shared";
 import { Grocery } from "./grocery.model";
 
 @Injectable()
@@ -123,13 +121,6 @@ export class GroceryService {
             // must emit a *new* value (immutability!)
             this.items.next([...this.allItems]);
         });
-    }
-
-    private getHeaders() {
-        let headers = new Headers();
-        headers.append("Content-Type", "application/json");
-        headers.append("Authorization", "Bearer " + BackendService.token);
-        return headers;
     }
 
     private handleErrors(error: Response) {

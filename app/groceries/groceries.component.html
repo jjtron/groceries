@@ -4,20 +4,11 @@
   <!-- Row 1: The custom action bar -->
   <GridLayout
     row="0"
-    columns="44, *, auto"
+    columns="44, *"
     class="action-bar-custom">
     <Label
       col="1"
       text="Groceries"></Label>
-    
-    <!-- Wrap the image in a StackLayout to give it a bigger tap target -->
-    <StackLayout
-      col="2"
-      (tap)="showMenu()">
-      <Image
-        src="res://menu"
-        stretch="none"></Image>
-    </StackLayout>
   </GridLayout>
 
   <!-- Row 2: The text field to add groceries, and recent button -->

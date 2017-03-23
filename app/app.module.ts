@@ -3,11 +3,10 @@ import { NgModule, NO_ERRORS_SCHEMA } from "@angular/core";
 import { NativeScriptHttpModule } from "nativescript-angular/http";
 import { NativeScriptRouterModule } from "nativescript-angular/router";
 
-import { authProviders, appRoutes } from "./app.routing";
+import { appRoutes } from "./app.routing";
 import { AppComponent } from "./app.component";
 import { setStatusBarColors, BackendService, LoginService } from "./shared";
 
-import { LoginModule } from "./login/login.module";
 import { GroceriesModule } from "./groceries/groceries.module";
 
 setStatusBarColors();
@@ -15,15 +14,13 @@ setStatusBarColors();
 @NgModule({
   providers: [
     BackendService,
-    LoginService,
-    authProviders
+    LoginService
   ],
   imports: [
     NativeScriptModule,
     NativeScriptHttpModule,
     NativeScriptRouterModule,
     NativeScriptRouterModule.forRoot(appRoutes),
-    LoginModule,
     GroceriesModule,
   ],
   declarations: [

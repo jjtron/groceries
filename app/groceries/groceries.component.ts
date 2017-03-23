@@ -7,7 +7,6 @@ import { TextField } from "ui/text-field";
 import * as SocialShare from "nativescript-social-share";
 
 import { GroceryService } from "./shared";
-import { LoginService, alert } from "../shared";
 
 @Component({
   selector: "gr-groceries",
@@ -28,7 +27,6 @@ export class GroceriesComponent implements OnInit {
 
   constructor(private router: Router,
     private store: GroceryService,
-    private loginService: LoginService,
     private page: Page) {}
 
   ngOnInit() {
@@ -116,7 +114,7 @@ export class GroceriesComponent implements OnInit {
       if (result === "Share") {
         this.share();
       } else if (result === "Log Off") {
-        this.logoff();
+//        this.logoff();
       }
     });
   }
@@ -128,10 +126,5 @@ export class GroceriesComponent implements OnInit {
       list.push(items[i].name);
     }
     SocialShare.shareText(list.join(", ").trim());
-  }
-
-  logoff() {
-    this.loginService.logoff();
-    this.router.navigate(["/login"]);
   }
 }

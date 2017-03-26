@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, EventEmitter, Input, Output } from "@angular/core";
+import { Component, ChangeDetectionStrategy, EventEmitter, Input, Output, ElementRef, ViewChild } from "@angular/core";
 import * as utils from "utils/utils";
 
 import { Grocery, GroceryService } from "../shared";
 import { alert } from "../../shared";
+import { View } from "ui/core/view";
+import { Color } from "color";
 
 declare var UIColor: any;
 
@@ -16,11 +18,11 @@ declare var UIColor: any;
 export class GroceryListComponent {
   @Input() showDeleted: boolean;
   @Input() row;
-  @Input() storeName;
-  @Input() todaysPicks;
+  @Input() storeName: string;
+  @Input() todaysPicks: boolean;
   @Output() loading = new EventEmitter();
   @Output() loaded = new EventEmitter();
-
+  @ViewChild("groceryList") groceryList: ElementRef;
   listLoaded = false;
 
   constructor(private store: GroceryService) { }
@@ -60,13 +62,35 @@ export class GroceryListComponent {
   }
 
   toggleGetToday(grocery: Grocery) {
-    this.store.toggleGetTodayFlag(grocery)
-      .then(
-        () => { },
-        () => {
-          alert("An error occurred managing your grocery list.");
-        }
-      );
+      let toggle = () => {
+        this.store.toggleGetTodayFlag(grocery)
+          .then(
+            () => { },
+            () => {
+              alert("An error occurred managing your grocery list.");
+            }
+          );
+      }
+      let grocery_list = <View>this.groceryList.nativeElement;
+      if (this.todaysPicks) {
+            grocery_list.getViewById(grocery.id).animate(
+                    {
+                        scale: {x: 1, y: 0},
+                        duration: 1000
+                    })
+            .then(() => {
+                grocery_list.getViewById(grocery.id).animate(
+                    {
+                        scale: {x: 1, y: 1},
+                        duration: 1
+                    }
+                );
+                toggle();
+            });
+      } else {
+          toggle();
+      }
+      
   }
 
   toggleDone(grocery: Grocery) {

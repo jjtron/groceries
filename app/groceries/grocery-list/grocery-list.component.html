@@ -1,10 +1,10 @@
-<ListView
+<ListView  #groceryList
   [row]="row"
   [class.visible]="listLoaded"
   [items]="store.items | async | itemStatus:showDeleted | StorePipe:storeName | GetTodayPipe:todaysPicks"
   (itemLoading)="makeBackgroundTransparent($event)" (loaded)="load()">
   <template let-item="item">
-    <GridLayout
+    <GridLayout id="{{item.id}}"
       columns="*, auto, auto"
       class="container"
       [opacity]="item.done ? '0.8' : '1'">

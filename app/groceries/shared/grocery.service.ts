@@ -296,12 +296,32 @@ export class GroceryService {
                 )
                 .subscribe(
                     (response) => {
-                        console.log(response);    
+                        updateNewItems(rows);
                     },
                     (e) => {
                         console.log(e);
                     });
             });
+        let updateNewItems = (rows) => {
+            
+            let pArray = new Array();
+            rows.forEach((row) => {
+                let p = new Promise ((resolve, reject) => {
+                    this.database.execSQL("UPDATE groceries SET createdate = '' WHERE Id = ?", [row[4]]).then(() => {
+                        resolve();
+                    });
+                });
+                pArray.push(p);
+            });
+            Promise.all(pArray)
+                    .then(() => {
+                        return this.fetch();
+                    })
+                    .then((data) => {
+                        this.allItems = [];
+                        return this.setUpData(data);
+                    });
+        }
     }
     
 }

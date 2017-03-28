@@ -109,7 +109,12 @@
   <StackLayout
   	[row]="4"
   	class="email-new-items"
-  	(tap)="notifyNewByEmail()">
+  	(tap)="notifyNewByEmail()"
+  	*ngIf="store.allItems | NewItemsPipe">
+   	<Label
+      [text]="'Notify new items by e-mail'"
+      style="font-weight: bold; font-size: 16px">
+    </Label>
   </StackLayout>
 
   <ActivityIndicator

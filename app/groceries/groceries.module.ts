@@ -5,7 +5,7 @@ import { groceriesRouting } from "./groceries.routing";
 import { GroceriesComponent } from "./groceries.component";
 import { GroceryListComponent } from "./grocery-list/grocery-list.component";
 import { ItemStatusPipe } from "./grocery-list/item-status.pipe";
-import { StorePipe, PrefixPipe, GetTodayPipe } from "./grocery-list/store-pipe.pipe";
+import { StorePipe, PrefixPipe, GetTodayPipe, NewItemsPipe } from "./grocery-list/store-pipe.pipe";
 
 @NgModule({
   imports: [
@@ -19,7 +19,8 @@ import { StorePipe, PrefixPipe, GetTodayPipe } from "./grocery-list/store-pipe.p
     ItemStatusPipe,
     StorePipe,
     PrefixPipe,
-    GetTodayPipe
+    GetTodayPipe,
+    NewItemsPipe
   ],
   schemas: [NO_ERRORS_SCHEMA]
 })

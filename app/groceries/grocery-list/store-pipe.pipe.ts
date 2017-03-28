@@ -46,3 +46,14 @@ export class GetTodayPipe {
     });
   }
 }
+
+@Pipe({
+  name: 'NewItemsPipe'
+})
+export class NewItemsPipe {
+  transform(array: any[]): boolean {
+    return array.some((grocery) => {
+        return grocery.createdate === '*';
+    });
+  }
+}

@@ -59,3 +59,8 @@ ActivityIndicator {
   horizontal-align: center;
   vertical-align: center;
 }
+
+.email-new-items {
+  height: 50;
+  background-color: #009900;
+}

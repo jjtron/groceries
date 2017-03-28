@@ -127,4 +127,8 @@ export class GroceriesComponent implements OnInit {
     }
     SocialShare.shareText(list.join(", ").trim());
   }
+    
+  notifyNewByEmail() {
+      this.store.sendNew();
+  }
 }

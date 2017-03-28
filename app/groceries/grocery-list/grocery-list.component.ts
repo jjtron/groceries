@@ -114,7 +114,7 @@ export class GroceryListComponent {
       );
   }
 
-  delete(grocery: Grocery) {
+  deleteItem(grocery: Grocery) {
     this.loading.next("");
     let successHandler = () => this.loaded.next("");
     let errorHandler = () => {

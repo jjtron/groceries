@@ -6,6 +6,7 @@ let Sqlite = require("nativescript-sqlite");
 const uuid = require('uuid-js');
 import * as fs from "file-system";
 import { Grocery } from "./grocery.model";
+var nsHttp = require("http");
 
 @Injectable()
 export class GroceryService {
@@ -174,8 +175,7 @@ export class GroceryService {
 
     private deleteItem(groceryId: string) {
         return new Promise((resolve, reject) => {
-            let id = uuid.create();
-            this.database.execSQL("DELETE FROM groceries WHERE Id = ?", [groceryId]).then(id => {
+            this.database.execSQL("DELETE FROM groceries WHERE Id = ?", [groceryId]).then(() => {
                 resolve(true);
             }, error => {
                 console.log("UPDATE ERROR", error);
@@ -269,4 +269,35 @@ export class GroceryService {
             }
         });
     }
+    
+    public sendNew(): any {
+        let p = new Promise((resolve, reject) => {
+            this.database.all("SELECT * FROM groceries WHERE createdate = '*'").then(rows => {
+                resolve(rows);
+            }, error => {
+                console.log("SELECT ERROR", error);
+            });
+        })
+        .then((rows: Array<any>) => {
+            let url = "www.jjtron.com";
+            let recipient = "gpetron4@cfl.rr.com";
+            let subject = "New grocery item(s)";
+            let message = '';
+            rows.forEach((row) => {
+                message += '"' + row[0] + '", ';
+            });
+            let api = "YXBpOmtleS02ZWU0YWQ5Y2IyYWY1ZjM3NjI4Nzg3ODk4YzJkMTAzNw==";
+            nsHttp.request({
+                url: "https://api.mailgun.net/v3/" + url + "/messages",
+                method: "POST",
+                headers: { "Authorization": "Basic " + api },
+                content: "from=jjtron@jjtron.com&to=" + recipient + "&subject=" + subject + "&text=" + message
+            }).then(success => {
+                console.log("SUCCESS", JSON.stringify(success));
+            }, error => {
+                console.log("ERROR", error);
+            });
+        });
+    }
+    
 }

@@ -1,5 +1,5 @@
 <GridLayout #container
-  rows="auto, auto, auto, *">
+  rows="auto, auto, auto, *, auto">
 
   <!-- Row 1: The custom action bar -->
   <GridLayout
@@ -104,6 +104,13 @@
     [showDeleted]="isShowingRecent"
     [todaysPicks]="todaysPicks"
     [storeName]="storeName"></gr-grocery-list>
+    
+  <!-- Row 5: Send email new items -->
+  <StackLayout
+  	[row]="4"
+  	class="email-new-items"
+  	(tap)="notifyNewByEmail()">
+  </StackLayout>
 
   <ActivityIndicator
     [busy]="isLoading"

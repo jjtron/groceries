@@ -6,7 +6,6 @@ let Sqlite = require("nativescript-sqlite");
 const uuid = require('uuid-js');
 import * as fs from "file-system";
 import { Grocery } from "./grocery.model";
-var nsHttp = require("http");
 
 @Injectable()
 export class GroceryService {
@@ -287,17 +286,22 @@ export class GroceryService {
                 message += '"' + row[0] + '", ';
             });
             let api = "YXBpOmtleS02ZWU0YWQ5Y2IyYWY1ZjM3NjI4Nzg3ODk4YzJkMTAzNw==";
-            nsHttp.request({
-                url: "https://api.mailgun.net/v3/" + url + "/messages",
-                method: "POST",
-                headers: { "Authorization": "Basic " + api },
-                content: "from=jjtron@jjtron.com&to=" + recipient + "&subject=" + subject + "&text=" + message
-            }).then(success => {
-                console.log("SUCCESS", JSON.stringify(success));
-            }, error => {
-                console.log("ERROR", error);
+            let headers = new Headers();
+            headers.append("Authorization", "Basic " + api);
+            headers.append("Content-Type", "application/x-www-form-urlencoded");
+            this.http.post(
+                  "https://api.mailgun.net/v3/" + url + "/messages",
+                  "from=jjtron@jjtron.com&to=" + recipient + "&subject=" + subject + "&text=" + message,
+                  { headers: headers }
+                )
+                .subscribe(
+                    (response) => {
+                        console.log(response);    
+                    },
+                    (e) => {
+                        console.log(e);
+                    });
             });
-        });
     }
     
 }

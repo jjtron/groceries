@@ -1,6 +1,5 @@
 [
 	"Apples",
-	"Liquor",
 	"x Wipes",
 	"x Toilet Paper",
 	"x Tea",
@@ -58,7 +57,6 @@
 	"Batteries",
 	"Almonds",
 	"x Cookies",
-	"Tea",
 	"x Dental Floss",
 	"x Bread",
 	"Bananas",
@@ -112,5 +110,7 @@
 	"Hand Soap",
 	"x Salad Dressing",
 	"x Peppers",
-	"x Mushrooms"
+	"x Mushrooms",
+	"Scallops",
+	"Hamburger Buns"
 ]

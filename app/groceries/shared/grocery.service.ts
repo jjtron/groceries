@@ -223,6 +223,7 @@ export class GroceryService {
 
     private setUpData(rows: any): any {
         let p = new Promise((resolve, reject) => {
+            this.allItems = [];
             rows.forEach((grocery) => {
                 this.allItems.push(
                     new Grocery(

@@ -38,29 +38,6 @@
       text="Recent items"
       *ngIf="isShowingRecent"
       class="add-bar-recent-label"></Label>
-    <GridLayout
-    	col="2"
-    	columns="*, *"
-    	horizontalAlignment="right">
-	    <StackLayout
-	      *ngIf="!isShowingRecent"
-	      class="add-bar-image-container"
-	      col="0"
-	      (tap)="storeName = 'aldis'">
-	      <Image
-	        col="0"
-	        [src]="storeName === 'aldis' ? 'res://aldis' : 'res://aldis_not'"></Image>
-	    </StackLayout>
-	    <StackLayout
-	      *ngIf="!isShowingRecent"
-	      class="add-bar-image-container"
-	      col="1"
-	      (tap)="storeName = 'publix'">
-	      <Image
-	        col="0"
-	        [src]="storeName === 'publix' ? 'res://publix' : 'res://publix_not'"></Image>
-	    </StackLayout>
-   </GridLayout>
    <StackLayout
      col="3"
      class="add-bar-recent-container"
